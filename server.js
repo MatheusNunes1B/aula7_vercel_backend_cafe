@@ -67,26 +67,4 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 const PORTA = process.env.PORT || 3000;
 
-
-app.listen(PORTA, () => {
-    console.log('');
-    console.log('🚀 ================================');
-    console.log(`🚀 Servidor rodando!`);
-    console.log(`🚀 Portal local: ${PORTA}`);
-    console.log('🚀 ================================');
-    console.log('');
-    console.log('📋 Rotas disponíveis:');
-    console.log(`   GET    /api/categorias`);
-    console.log(`   POST   /api/categorias`);
-    console.log(`   GET    /api/produtos`);
-    console.log(`   GET    /api/produtos/:id`);
-    console.log(`   POST   /api/produtos`);
-    console.log(`   PUT    /api/produtos/:id`);
-    console.log(`   DELETE /api/produtos/:id`);
-    console.log('');
-    console.log('💣 Rota de teste de erro:');
-    console.log(`   GET   /api/produtos/erro-teste`);
-    console.log('');
-});
-
 module.exports = app;
