@@ -67,4 +67,10 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 const PORTA = process.env.PORT || 3000;
 
+if (process.env.NODE_ENV !== 'production') {
+  app.listen(PORTA, () => {
+    console.log(`Servidor rodando na porta ${PORTA}`);
+  });
+}
+
 module.exports = app;
