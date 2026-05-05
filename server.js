@@ -1,33 +1,19 @@
-if (!process.env.SUPABASE_URL) {
-    throw new Error('SUPABASE_URL não definida');
-}
-
-if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    throw new Error('SUPABASE_SERVICE_ROLE_KEY não definida');
-}
-
-
-console.log('URL:', process.env.SUPABASE_URL);
-console.log('KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'OK' : 'MISSING');
-
 // =============================================================
-// server.js — API Cafeteria Horizonte (CORRIGIDO)
+// server.js — API Cafeteria Horizonte (Vercel + Supabase)
 // =============================================================
+
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-const { createClient } = require('@supabase/supabase-js');
 
 const logger = require('./middlewares/logger');
 const errorHandler = require('./middlewares/errorHandler');
 
-const app = express();
+// ✅ IMPORTA O SUPABASE CENTRALIZADO
+const supabase = require('./data/supabase');
 
-// ─── CONFIG SUPABASE ──────────────────────────────────────────
-const supabase = createClient(
-    process.env.SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY
-);
+const app = express();
 
 // ─── MIDDLEWARES ──────────────────────────────────────────────
 app.use(cors());
@@ -169,7 +155,7 @@ app.use((req, res) => {
 // ─── ERROR HANDLER ───────────────────────────────────────────
 app.use(errorHandler);
 
-// ─── START LOCAL ─────────────────────────────────────────────
+// ─── START LOCAL (NÃO EXECUTA NA VERCEL) ─────────────────────
 const PORTA = process.env.PORT || 3000;
 
 if (process.env.NODE_ENV !== 'production') {
@@ -178,4 +164,5 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
+// ✅ EXPORTA PRA VERCEL
 module.exports = app;
