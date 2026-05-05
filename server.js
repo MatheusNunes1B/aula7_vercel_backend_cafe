@@ -10,9 +10,6 @@ const cors = require('cors');
 const logger = require('./middlewares/logger');
 const errorHandler = require('./middlewares/errorHandler');
 
-// ✅ IMPORTA O SUPABASE CENTRALIZADO
-const supabase = require('./data/supabase');
-
 const app = express();
 
 // ─── MIDDLEWARES ──────────────────────────────────────────────
@@ -25,124 +22,14 @@ app.get('/', (req, res) => {
     res.json({ mensagem: '☕ API Cafeteria Horizonte rodando com Supabase' });
 });
 
-// ─── ROTAS EXISTENTES ─────────────────────────────────────────
+// ─── ROTAS ────────────────────────────────────────────────────
 const rotasCategorias = require('./routes/categorias');
 const rotasProdutos   = require('./routes/produtos');
+const rotasPedidos    = require('./routes/pedidos'); // ✅ NOVA
 
 app.use('/api/categorias', rotasCategorias);
 app.use('/api/produtos', rotasProdutos);
-
-// =============================================================
-// 🧾 ROTAS DE PEDIDOS (SUPABASE)
-// =============================================================
-
-// GET TODOS
-app.get('/api/pedidos', async (req, res, next) => {
-    try {
-        const { data, error } = await supabase
-            .from('pedidos')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) throw error;
-
-        res.json({ sucesso: true, dados: data });
-    } catch (err) {
-        next(err);
-    }
-});
-
-// GET POR ID
-app.get('/api/pedidos/:id', async (req, res, next) => {
-    try {
-        const { data, error } = await supabase
-            .from('pedidos')
-            .select('*')
-            .eq('id', req.params.id)
-            .single();
-
-        if (error) throw error;
-
-        res.json({ sucesso: true, dados: data });
-    } catch (err) {
-        next(err);
-    }
-});
-
-// CRIAR PEDIDO
-app.post('/api/pedidos', async (req, res, next) => {
-    try {
-        const { cliente_nome, cliente_tel, itens, observacao, latitude, longitude } = req.body;
-
-        if (!cliente_nome || !itens || itens.length === 0) {
-            return res.status(400).json({
-                sucesso: false,
-                mensagem: 'cliente_nome e itens são obrigatórios'
-            });
-        }
-
-        const { data, error } = await supabase
-            .from('pedidos')
-            .insert([{
-                cliente_nome,
-                cliente_tel,
-                itens,
-                observacao,
-                latitude,
-                longitude,
-                status: 'novo'
-            }])
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        res.status(201).json({ sucesso: true, dados: data });
-
-    } catch (err) {
-        next(err);
-    }
-});
-
-// ATUALIZAR STATUS
-app.patch('/api/pedidos/:id', async (req, res, next) => {
-    try {
-        const { status } = req.body;
-
-        const { data, error } = await supabase
-            .from('pedidos')
-            .update({ status })
-            .eq('id', req.params.id)
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        res.json({ sucesso: true, dados: data });
-
-    } catch (err) {
-        next(err);
-    }
-});
-
-// DELETAR
-app.delete('/api/pedidos/:id', async (req, res, next) => {
-    try {
-        const { data, error } = await supabase
-            .from('pedidos')
-            .delete()
-            .eq('id', req.params.id)
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        res.json({ sucesso: true, dados: data });
-
-    } catch (err) {
-        next(err);
-    }
-});
+app.use('/api/pedidos', rotasPedidos); // ✅ NOVA
 
 // ─── 404 ─────────────────────────────────────────────────────
 app.use((req, res) => {
@@ -155,7 +42,7 @@ app.use((req, res) => {
 // ─── ERROR HANDLER ───────────────────────────────────────────
 app.use(errorHandler);
 
-// ─── START LOCAL (NÃO EXECUTA NA VERCEL) ─────────────────────
+// ─── START LOCAL (NÃO RODA NA VERCEL) ────────────────────────
 const PORTA = process.env.PORT || 3000;
 
 if (process.env.NODE_ENV !== 'production') {
@@ -164,5 +51,5 @@ if (process.env.NODE_ENV !== 'production') {
     });
 }
 
-// ✅ EXPORTA PRA VERCEL
+// ─── EXPORTAÇÃO (OBRIGATÓRIO PRA VERCEL) ─────────────────────
 module.exports = app;
