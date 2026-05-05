@@ -1,3 +1,12 @@
+if (!process.env.SUPABASE_URL) {
+    throw new Error('SUPABASE_URL não definida');
+}
+
+if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('SUPABASE_SERVICE_ROLE_KEY não definida');
+}
+
+
 console.log('URL:', process.env.SUPABASE_URL);
 console.log('KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'OK' : 'MISSING');
 
