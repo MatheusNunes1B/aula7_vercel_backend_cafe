@@ -236,6 +236,28 @@ app.delete('/api/pedidos/:id', async (req, res, next) => {
     }
 });
 
+// IMPORTAR
+const { createClient } = require('@supabase/supabase-js');
+
+const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+// ROTA TESTE
+app.get('/api/pedidos', async (req, res) => {
+    const { data, error } = await supabase
+        .from('pedidos')
+        .select('*');
+
+    if (error) {
+        return res.status(500).json({ erro: error.message });
+    }
+
+    res.json({ sucesso: true, dados: data });
+});
+
+
 // ─── 404 ─────────────────────────────────────────────────────
 app.use((req, res) => {
     res.status(404).json({
