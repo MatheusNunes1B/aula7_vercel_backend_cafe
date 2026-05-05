@@ -1,3 +1,4 @@
+require('dotenv').config();
 if (!process.env.SUPABASE_URL) {
     throw new Error('SUPABASE_URL não definida');
 }
