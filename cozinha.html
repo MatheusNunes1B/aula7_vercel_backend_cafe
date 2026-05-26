@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cafeteria Horizonte - Painel da Cozinha</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        barlow: ['Barlow', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: '#7C4A1E',
+                        primaryHover: '#5E3415',
+                        bege: '#F5EFE6',
+                        begeDeep: '#E8DDD0',
+                        coffee: '#3B2212',
+                        mutedCoffee: '#9E7B5A',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #FAF7F2; }
+    </style>
+</head>
+
+<body class="font-barlow text-coffee w-full m-0 min-h-screen flex flex-col">
+    <header class="bg-[#F5EFE6] shadow-md py-4 px-6 flex justify-between items-center sticky top-0 z-50 border-b border-[#E8DDD0]">
+        <div class="flex items-center gap-4">
+            <img src="./img/logo.png" alt="Cafeteria Horizonte" class="h-12 w-auto">
+            <h1 class="text-xl md:text-2xl font-bold text-primary hidden sm:block border-l-2 border-primary pl-4">
+                Painel da Cozinha
+            </h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="index.html" class="hidden md:inline-block text-primary font-bold hover:text-primaryHover transition">Cardápio</a>
+            <div id="status-conexao" class="flex items-center gap-2 text-sm font-bold text-green-700">
+                <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                Online
+            </div>
+            <button onclick="carregarPedidos()"
+                class="bg-primary text-white px-4 py-2 rounded-lg font-bold hover:bg-primaryHover transition shadow-md">
+                Atualizar
+            </button>
+        </div>
+    </header>
+
+    <main class="flex-grow p-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+                <div>
+                    <p class="text-mutedCoffee font-semibold">Cafeteria Horizonte</p>
+                    <h2 class="text-3xl font-black text-coffee">Pedidos Recebidos</h2>
+                </div>
+                <span id="contador-pedidos" class="bg-primary text-white px-3 py-1 rounded-full font-bold text-sm w-fit">0 pedidos</span>
+            </div>
+
+            <div id="pedidos-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <p class="text-mutedCoffee col-span-full text-center py-10">Carregando pedidos...</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const URL_API = 'https://aula7-vercel-backend-cafe-matheusnunes1bs-projects.vercel.app/api/pedidos';
+
+        async function carregarPedidos() {
+            const container = document.getElementById('pedidos-container');
+            const contador = document.getElementById('contador-pedidos');
+            const statusConexao = document.getElementById('status-conexao');
+
+            try {
+                statusConexao.innerHTML = '<span class="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></span> Atualizando...';
+                statusConexao.className = 'flex items-center gap-2 text-sm font-bold text-yellow-700';
+
+                const resposta = await fetch(URL_API);
+                if (!resposta.ok) throw new Error('Erro ao buscar pedidos');
+
+                const pedidos = await resposta.json();
+                renderizarPedidos(pedidos);
+                contador.innerText = `${pedidos.length} pedido(s)`;
+
+                setTimeout(() => {
+                    statusConexao.innerHTML = '<span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span> Online';
+                    statusConexao.className = 'flex items-center gap-2 text-sm font-bold text-green-700';
+                }, 500);
+            } catch (erro) {
+                console.error('Erro ao carregar pedidos:', erro);
+                container.innerHTML = `
+                    <div class="col-span-full bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg" role="alert">
+                        <strong class="font-bold">Ops!</strong>
+                        <span class="block sm:inline">Não foi possível carregar os pedidos. Verifique a conexão com a API.</span>
+                    </div>`;
+                statusConexao.innerHTML = '<span class="w-3 h-3 bg-red-500 rounded-full"></span> Offline';
+                statusConexao.className = 'flex items-center gap-2 text-sm font-bold text-red-700';
+            }
+        }
+
+        function renderizarPedidos(pedidos) {
+            const container = document.getElementById('pedidos-container');
+            container.innerHTML = '';
+
+            if (pedidos.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full flex flex-col items-center justify-center py-16 opacity-60 text-center">
+                        <div class="w-16 h-16 rounded-full bg-[#E8DDD0] flex items-center justify-center text-3xl mb-4">☕</div>
+                        <p class="text-xl font-bold text-coffee">Nenhum pedido pendente.</p>
+                        <p class="text-mutedCoffee">A cozinha está livre por enquanto!</p>
+                    </div>`;
+                return;
+            }
+
+            pedidos.forEach(pedido => {
+                let itens = [];
+                try {
+                    itens = typeof pedido.itens === 'string' ? JSON.parse(pedido.itens) : pedido.itens;
+                } catch (e) {
+                    console.error('Erro ao converter itens do pedido:', e);
+                }
+
+                if (!itens || !Array.isArray(itens)) itens = [];
+
+                const htmlItens = itens.map(item => `
+                    <li class="flex justify-between border-b border-[#E8DDD0] py-2 gap-3">
+                        <span class="font-semibold text-coffee">${item.quantidade || 1}x ${item.nome || 'Produto'}</span>
+                        <span class="text-mutedCoffee whitespace-nowrap">R$ ${(item.preco || 0).toFixed(2)}</span>
+                    </li>
+                `).join('');
+
+                let dataFormatada = 'Data desconhecida';
+                if (pedido.created_at) {
+                    const dataObj = new Date(pedido.created_at);
+                    dataFormatada = dataObj.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ' - ' + dataObj.toLocaleDateString('pt-BR');
+                }
+
+                const card = `
+                    <div data-pedido-card class="bg-[#F5EFE6] border-t-4 border-primary shadow-lg rounded-xl p-5 flex flex-col hover:shadow-xl transition duration-300 border border-[#E8DDD0]">
+                        <div class="flex justify-between items-start mb-4 gap-3">
+                            <div>
+                                <h2 class="text-xl font-black text-coffee">Pedido #${pedido.id}</h2>
+                                <span class="text-xs text-mutedCoffee">${dataFormatada}</span>
+                            </div>
+                            <span class="bg-[#E8DDD0] text-primary text-xs font-black uppercase px-2 py-1 rounded">
+                                ${pedido.status || 'Pendente'}
+                            </span>
+                        </div>
+
+                        <div class="mb-4 bg-[#FAF7F2] p-3 rounded-lg text-sm border border-[#E8DDD0]">
+                            <p class="mb-1"><strong>Cliente:</strong> <span class="text-[#5E3A1E]">${pedido.cliente_nome || 'Não informado'}</span></p>
+                            <p><strong>Endereço:</strong> <span class="text-[#5E3A1E]">${pedido.cliente_endereco || 'Não informado'}</span></p>
+                        </div>
+
+                        <div class="flex-grow mb-4">
+                            <h3 class="font-bold text-coffee mb-2 uppercase text-sm">Itens do Pedido:</h3>
+                            <ul class="text-sm">
+                                ${htmlItens}
+                            </ul>
+                        </div>
+
+                        <div class="mt-auto pt-4 border-t border-[#E8DDD0] flex justify-between items-center gap-3">
+                            <div class="flex flex-col">
+                                <span class="text-xs text-mutedCoffee font-bold uppercase">Total a pagar</span>
+                                <span class="font-black text-xl text-primary">R$ ${(pedido.total || 0).toFixed(2)}</span>
+                            </div>
+                            <button onclick="concluirPedido(this)" class="bg-green-700 text-white px-5 py-2 rounded-lg font-bold hover:bg-green-800 transition transform hover:scale-105">
+                                Pronto
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += card;
+            });
+        }
+
+        function concluirPedido(btn) {
+            const card = btn.closest('[data-pedido-card]');
+            card.classList.add('opacity-50', 'grayscale', 'pointer-events-none');
+            btn.innerText = 'Finalizado';
+            btn.classList.replace('bg-green-700', 'bg-gray-400');
+            btn.classList.replace('hover:bg-green-800', 'hover:bg-gray-400');
+        }
+
+        carregarPedidos();
+        setInterval(carregarPedidos, 10000);
+    </script>
+</body>
+
+</html>
